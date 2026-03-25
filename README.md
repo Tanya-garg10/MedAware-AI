@@ -1,6 +1,24 @@
-# MedAware AI - Medicine Scanner Application
+# MedAware AI - Medicine Scanner with AI Safety Analysis
 
-A modern, AI-powered web application that scans medicine packaging, extracts text using OCR, and provides instant information about medicines including uses, side effects, expiry status, and important warnings.
+An intelligent medicine scanning application that uses OCR, computer vision, and **AI-powered reasoning** to analyze medicine packaging and provide comprehensive safety warnings and simplified explanations for non-medical users.
+
+## Features
+
+### Core Scanning Functionality
+- **Camera & Upload**: Capture photos directly from device camera or upload images
+- **OCR Processing**: Tesseract.js for accurate text extraction from medicine packaging
+- **Medicine Database**: Comprehensive database with 10+ common medicines
+- **Intelligent Analysis**: Extracts medicine names and expiry dates from OCR text
+- **Expiry Status Check**: Validates medicine expiry dates (valid/near-expiry/expired)
+- **Responsive Design**: Works seamlessly on desktop, tablet, and mobile devices
+
+### AI-Powered Safety Layer (NEW)
+- **AI Safety Analysis**: Claude AI generates context-aware safety warnings for each medicine
+- **Simplified Explanations**: Complex medical terminology automatically converted to simple language for lay users
+- **Drug Interaction Warnings**: AI-generated common drug interactions and substance conflicts
+- **Population-Specific Warnings**: Special alerts for pregnant women, elderly, children, and people with specific health conditions
+- **Confidence Scoring**: Each analysis includes a confidence score for transparency
+- **Multi-Tab Dashboard**: Beautiful tab-based results with Uses, Side Effects, Interactions, and Population warnings
 
 ## Features
 
@@ -19,38 +37,41 @@ A modern, AI-powered web application that scans medicine packaging, extracts tex
 - **Frontend**: React.js 19 with Next.js 16 (App Router)
 - **UI Components**: shadcn/ui + Radix UI + Tailwind CSS v4
 - **OCR**: Tesseract.js (browser-based)
+- **AI Engine**: Vercel AI SDK 6 with Claude 3.5 Sonnet
 - **Backend**: Next.js API Routes
 - **Database**: In-memory medicine database (easily expandable to real DB)
 - **Language**: TypeScript
+- **Validation**: Zod schemas
 
 ## Project Structure
 
 ```
 medaware-ai/
 ├── app/
-│   ├── page.tsx                 # Main scanner page
-│   ├── layout.tsx               # Root layout
-│   ├── globals.css              # Global styles
+│   ├── page.tsx                         # Main scanner page
+│   ├── layout.tsx                       # Root layout
+│   ├── globals.css                      # Global styles
 │   └── api/
-│       ├── analyze/route.ts     # Medicine analysis endpoint
-│       └── ocr/route.ts         # OCR processing endpoint
+│       ├── analyze/route.ts             # Medicine analysis endpoint
+│       ├── ocr/route.ts                 # OCR processing endpoint
+│       └── safety-analysis/route.ts     # AI safety warnings endpoint (NEW)
 ├── components/
-│   ├── image-uploader.tsx       # Image upload & drag-drop
-│   ├── camera-capture.tsx       # Camera capture interface
-│   ├── medicine-results.tsx     # Results display dashboard
-│   └── ui/                      # shadcn/ui components
+│   ├── image-uploader.tsx               # Image upload & drag-drop
+│   ├── camera-capture.tsx               # Camera capture interface
+│   ├── medicine-results.tsx             # Basic results display
+│   ├── medicine-results-enhanced.tsx    # Enhanced results with AI (NEW)
+│   └── ui/                              # shadcn/ui components
 ├── lib/
-│   ├── medicine-database.ts     # Medicine data & search
-│   ├── ocr-utils.ts            # OCR and text processing
-│   ├── medicine-analyzer.ts    # Analysis engine
-│   └── utils.ts                # Utility functions
+│   ├── medicine-database.ts             # Medicine data & search
+│   ├── ocr-utils.ts                     # OCR and text processing
+│   ├── medicine-analyzer.ts             # Analysis engine
+│   ├── ai-safety-analyzer.ts            # AI safety analysis utilities (NEW)
+│   └── utils.ts                         # Utility functions
 └── public/
-    └── medicine-app-architecture.jpg  # Architecture diagram
+    └── medicine-app-architecture.jpg    # Architecture diagram
 ```
 
-## Getting Started
-
-### Installation
+## Installation
 
 1. **Clone/Download the Project**
    ```bash
@@ -67,14 +88,21 @@ medaware-ai/
    yarn install
    ```
 
-3. **Run Development Server**
+3. **Set Environment (Optional)**
+   - For production use, add AI Gateway API key:
+   ```bash
+   # .env.local
+   # Not needed for basic OpenAI via AI Gateway
+   ```
+
+4. **Run Development Server**
    ```bash
    npm run dev
    # or
    pnpm dev
    ```
 
-4. **Open in Browser**
+5. **Open in Browser**
    ```
    http://localhost:3000
    ```
@@ -84,6 +112,7 @@ medaware-ai/
 - No environment variables required for basic functionality
 - Tesseract.js models download automatically on first OCR call
 - Medicine database is pre-loaded
+- Claude AI is accessed via Vercel AI Gateway (no manual setup needed)
 
 ## How to Use
 
@@ -96,13 +125,22 @@ medaware-ai/
    - The app extracts text from the medicine packaging
    - Shows confidence level of text extraction
 
-3. **View Results**
+3. **AI Safety Analysis Generates** (NEW)
+   - Claude AI automatically generates:
+     - Simple explanation of how the medicine works
+     - Critical safety warnings (top 3-4)
+     - Common drug interactions
+     - Warnings for specific populations (elderly, pregnant, children, etc.)
+   - Loading indicator shows when analysis is generating
+
+4. **View Comprehensive Results**
    - Medicine name and confidence badge
    - Expiry status (valid/near-expiry/expired)
-   - Three tabs: Uses, Side Effects, Warnings
-   - Simplified medical terminology
+   - Four tabs: Uses, Side Effects, Interactions, Populations
+   - AI-generated safety analysis sections
+   - Important disclaimers and warnings
 
-4. **Scan Another Medicine**
+5. **Scan Another Medicine**
    - Click "Scan Another Medicine" to start over
 
 ## Medicine Database
@@ -160,7 +198,8 @@ FormData:
     "medicineData": { ... },
     "expiryStatus": { "status": "valid", "message": "..." },
     "simplifiedInfo": { "uses": [...], "sideEffects": [...], "warnings": [...] },
-    "confidence": 0.95
+    "confidence": 0.95,
+    "timestamp": "2026-03-25T..."
   }
 }
 ```
@@ -168,7 +207,40 @@ FormData:
 ### POST /api/ocr
 Validates image files for OCR processing.
 
+### POST /api/safety-analysis (NEW - AI Safety Analysis)
+Generates AI-powered safety warnings and simplified explanations.
+
+**Request:**
+```json
+{
+  "medicineName": "Aspirin",
+  "uses": ["Pain relief", "Fever reduction"],
+  "sideEffects": ["Stomach upset", "Heartburn"],
+  "warnings": ["Do not take with blood thinners"],
+  "expiryStatus": "valid"
+}
+```
+
+**Response:**
+```json
+{
+  "safetyWarnings": ["Never take if allergic to aspirin", "May increase bleeding risk", "Can cause stomach ulcers"],
+  "interactionRisks": ["Increases bleeding risk with anticoagulants", "May reduce effectiveness of ACE inhibitors"],
+  "populationWarnings": ["Pregnant women: Avoid unless advised by doctor", "Elderly: Higher risk of GI bleeding", "Children: Use lower doses"],
+  "simplifiedExplanation": "Aspirin works by blocking pain signals and reducing inflammation in your body. It also makes blood thinner, which helps prevent blood clots...",
+  "confidenceScore": 0.92,
+  "disclaimers": ["Educational purposes only", "Always consult healthcare professionals", "Not a substitute for medical advice", "Seek immediate medical attention for severe reactions"]
+}
+```
+
 ## Key Functions
+
+### AI Safety Analysis (`lib/ai-safety-analyzer.ts`) - NEW
+- `prepareMedicineForAIAnalysis()` - Formats medicine data for Claude
+- `generateSafetyContext()` - Creates system prompts for AI
+- `generateInteractionPrompt()` - Generates drug interaction analysis prompts
+- `generatePopulationWarningsPrompt()` - Creates population-specific warning prompts
+- `generateSimplifiedExplanationPrompt()` - Creates explanation prompts
 
 ### OCR Utilities (`lib/ocr-utils.ts`)
 - `extractTextFromImage()` - Tesseract.js OCR extraction
@@ -276,21 +348,25 @@ Modify `/next.config.mjs` for:
 
 ## Limitations & Future Improvements
 
-### Current Limitations
-- Database limited to 10 medicines (easily expandable)
+### Current Capabilities
+- Database includes 10 common medicines (easily expandable)
 - OCR works best with clear, well-lit images
-- English text only
-- No data persistence between sessions
+- English text only currently
+- AI analysis generated in real-time (no caching)
+- Single-image analysis per scan
 
-### Planned Improvements
+### Planned Future Improvements
 - Backend database integration (Supabase/Firebase)
+- Expanded medicine database (1000+ medicines)
 - Multiple language support
 - Barcode/QR code scanning
-- Medicine interaction checker
-- User history/favorites
+- Real-time drug interaction database
+- User history and favorites
 - Doctor consultation integration
 - Prescription verification
-- Real-time database updates
+- Medical alert profile system
+- Export results as PDF
+- Offline mode support
 
 ## Security & Privacy
 
