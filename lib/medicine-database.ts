@@ -273,7 +273,9 @@ export function searchMedicine(query: string): Medicine | null {
 }
 
 export function simplifyMedicalText(text: string): string {
-  const replacements: Record<string, string> = {
+  // Import the comprehensive simplifier for better results
+  // This is a fallback for backward compatibility
+  const basicReplacements: Record<string, string> = {
     'hypertension': 'high blood pressure',
     'tachycardia': 'fast heartbeat',
     'bradycardia': 'slow heartbeat',
@@ -298,7 +300,7 @@ export function simplifyMedicalText(text: string): string {
 
   let simplified = text.toLowerCase();
   
-  Object.entries(replacements).forEach(([medical, simple]) => {
+  Object.entries(basicReplacements).forEach(([medical, simple]) => {
     const regex = new RegExp(`\\b${medical}\\b`, 'gi');
     simplified = simplified.replace(regex, simple);
   });
