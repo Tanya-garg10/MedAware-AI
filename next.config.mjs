@@ -6,6 +6,10 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  onDemandEntries: {
+    maxInactiveAge: 0,
+    maxSize: 1000,
+  },
 }
 
 export default nextConfig
