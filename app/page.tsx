@@ -101,107 +101,140 @@ export default function ScannerPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-4">
+    <div className="min-h-screen bg-background">
       <CameraCapture
         isOpen={isCameraOpen}
         onClose={() => setIsCameraOpen(false)}
         onCapture={handleCameraCapture}
       />
 
-      <div className="max-w-2xl mx-auto">
-        {/* Header */}
-        <div className="mb-8 text-center">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-            MedAware AI
-          </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-400 mb-4">
-            Scan medicine packaging to get instant information
-          </p>
-          <div className="inline-block bg-blue-100 dark:bg-blue-950 rounded-full px-4 py-2 text-sm text-blue-700 dark:text-blue-300">
-            AI-Powered Medicine Scanner
+      <div className="relative">
+        {/* Hero Section */}
+        <div className="bg-gradient-to-br from-primary/10 via-secondary/5 to-accent/10 border-b border-border px-4 py-12">
+          <div className="max-w-3xl mx-auto">
+            <div className="space-y-3">
+              <div className="inline-flex items-center gap-2 bg-primary/20 text-primary px-3 py-1 rounded-full text-sm font-medium">
+                <span className="w-2 h-2 rounded-full bg-primary"></span>
+                AI-Powered Medicine Scanner
+              </div>
+              <h1 className="text-5xl font-bold text-foreground tracking-tight">
+                MedAware AI
+              </h1>
+              <p className="text-xl text-muted-foreground max-w-2xl">
+                Scan medicine packaging to get instant information powered by AI safety analysis
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* Error Alert */}
-        {error && (
-          <Alert variant="destructive" className="mb-6">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
-        {/* Main Card */}
-        <Card className="p-8 mb-6 shadow-lg">
-          <div className="mb-6">
-            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
-              Upload or Capture Medicine Image
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Take a clear photo of the medicine packaging. Make sure the text is visible and the image is well-lit.
-            </p>
-          </div>
-
-          {/* Image Uploader */}
-          <ImageUploader
-            onImageSelect={handleImageSelect}
-            isLoading={isLoading}
-            previewUrl={previewUrl}
-          />
-
-          {/* Camera Button */}
-          {isLoading ? (
-            <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950 rounded-lg flex items-center justify-center gap-2">
-              <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
-              <span className="text-blue-600 dark:text-blue-400 font-medium">
-                Processing medicine image with OCR...
-              </span>
-            </div>
-          ) : (
-            <div className="mt-4 text-center">
-              <button
-                onClick={() => setIsCameraOpen(true)}
-                disabled={isLoading}
-                className="text-blue-600 dark:text-blue-400 hover:underline text-sm font-medium disabled:opacity-50"
-              >
-                Or open camera for direct capture
-              </button>
-            </div>
+        {/* Main Content */}
+        <div className="max-w-3xl mx-auto px-4 py-8">
+          {/* Error Alert */}
+          {error && (
+            <Alert variant="destructive" className="mb-8 border-destructive/30 bg-destructive/5">
+              <AlertCircle className="h-5 w-5" />
+              <AlertDescription className="text-destructive">{error}</AlertDescription>
+            </Alert>
           )}
-        </Card>
 
-        {/* Info Cards */}
-        <div className="grid md:grid-cols-2 gap-4 mb-8">
-          <Card className="p-4 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950 dark:to-cyan-950">
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
-              How it Works
-            </h3>
-            <ul className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
-              <li>• Scan medicine packaging</li>
-              <li>• AI extracts medicine information</li>
-              <li>• Get uses, side effects & warnings</li>
-              <li>• Check expiry status instantly</li>
-            </ul>
+          {/* Upload Section */}
+          <Card className="border-2 border-border shadow-lg overflow-hidden mb-8">
+            <div className="p-8">
+              <div className="space-y-2 mb-8">
+                <h2 className="text-3xl font-bold text-foreground">
+                  Upload Medicine Image
+                </h2>
+                <p className="text-muted-foreground">
+                  Capture a clear photo of medicine packaging with visible text and expiry date
+                </p>
+              </div>
+
+              {/* Image Uploader */}
+              <div className="mb-6">
+                <ImageUploader
+                  onImageSelect={handleImageSelect}
+                  isLoading={isLoading}
+                  previewUrl={previewUrl}
+                />
+              </div>
+
+              {/* Loading State */}
+              {isLoading && (
+                <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 flex items-center justify-center gap-3">
+                  <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                  <span className="text-primary font-medium">
+                    Processing with OCR and AI analysis...
+                  </span>
+                </div>
+              )}
+
+              {/* Camera Fallback */}
+              {!isLoading && !previewUrl && (
+                <div className="text-center border-t border-border pt-6">
+                  <p className="text-muted-foreground mb-4">Or use direct camera capture</p>
+                  <button
+                    onClick={() => setIsCameraOpen(true)}
+                    disabled={isLoading}
+                    className="bg-secondary text-secondary-foreground hover:bg-secondary/90 px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
+                  >
+                    Open Camera
+                  </button>
+                </div>
+              )}
+            </div>
           </Card>
 
-          <Card className="p-4 bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-950 dark:to-orange-950">
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
-              Tips for Best Results
-            </h3>
-            <ul className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
-              <li>• Ensure good lighting</li>
-              <li>• Keep text in focus</li>
-              <li>• Use clear, legible images</li>
-              <li>• Try from different angles</li>
-            </ul>
-          </Card>
-        </div>
+          {/* Info Grid */}
+          <div className="grid md:grid-cols-2 gap-6 mb-12">
+            {/* How It Works Card */}
+            <Card className="border border-border p-6 hover:shadow-md transition-shadow">
+              <div className="space-y-4">
+                <h3 className="text-lg font-bold text-foreground">How It Works</h3>
+                <ul className="space-y-3">
+                  {[
+                    'Capture medicine packaging photo',
+                    'AI extracts medicine information',
+                    'Get uses & side effects instantly',
+                    'View AI safety warnings',
+                  ].map((item, i) => (
+                    <li key={i} className="flex items-start gap-3 text-muted-foreground">
+                      <span className="text-primary font-bold mt-0.5">{i + 1}.</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </Card>
 
-        {/* Footer */}
-        <div className="text-center text-sm text-gray-600 dark:text-gray-400">
-          <p>
-            Disclaimer: This app provides educational information only. 
-            Always consult healthcare professionals for medical advice.
-          </p>
+            {/* Tips Card */}
+            <Card className="border border-border p-6 hover:shadow-md transition-shadow">
+              <div className="space-y-4">
+                <h3 className="text-lg font-bold text-foreground">Tips for Best Results</h3>
+                <ul className="space-y-3">
+                  {[
+                    'Ensure bright, even lighting',
+                    'Focus on medicine packaging text',
+                    'Use clear, high-resolution images',
+                    'Capture expiry date clearly',
+                  ].map((tip, i) => (
+                    <li key={i} className="flex items-start gap-3 text-muted-foreground">
+                      <span className="text-accent font-bold mt-0.5">✓</span>
+                      <span>{tip}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </Card>
+          </div>
+
+          {/* Disclaimer */}
+          <Alert className="border-primary/30 bg-primary/5 mb-8">
+            <AlertCircle className="h-4 w-4 text-primary" />
+            <AlertDescription className="text-muted-foreground">
+              <span className="font-semibold text-foreground">Disclaimer: </span>
+              This app provides educational information only. Always consult healthcare professionals for medical advice. Not a substitute for professional medical guidance.
+            </AlertDescription>
+          </Alert>
         </div>
       </div>
     </div>
