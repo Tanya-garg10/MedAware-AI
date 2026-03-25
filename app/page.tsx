@@ -4,7 +4,7 @@ import { useState, Suspense } from 'react';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { ImageUploader } from '@/components/image-uploader';
 import { CameraCapture } from '@/components/camera-capture';
-import { MedicineResultsEnhanced } from '@/components/medicine-results-enhanced';
+import { MedicineResults } from '@/components/medicine-results';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card } from '@/components/ui/card';
 import type { AnalysisResult } from '@/lib/medicine-analyzer';
@@ -94,7 +94,7 @@ export default function ScannerPage() {
               Medicine Analysis Results
             </p>
           </div>
-          <MedicineResultsEnhanced result={result} onNewScan={handleNewScan} />
+          <MedicineResults result={result} onNewScan={handleNewScan} />
         </div>
       </div>
     );
