@@ -1,5 +1,6 @@
 'use client';
 
+// Force rebuild - cache clear
 import { useState, Suspense } from 'react';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { ImageUploader } from '@/components/image-uploader';
