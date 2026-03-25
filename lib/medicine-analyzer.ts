@@ -2,9 +2,15 @@ import {
   searchMedicine,
   simplifyMedicalText,
   checkExpiryStatus,
-  type Medicine
+  type Medicine,
+  medicineDatabase,
 } from '@/lib/medicine-database';
 import { extractMedicineInfo } from '@/lib/ocr-utils';
+import {
+  findBestMedicineMatch,
+  formatMedicineNotFoundError,
+  extractMedicineNameFromText,
+} from '@/lib/medicine-matcher';
 
 export interface AnalysisResult {
   medicineName: string;
@@ -21,10 +27,13 @@ export interface AnalysisResult {
   };
   confidence: number;
   timestamp: string;
+  matchSuggestions?: Array<{ name: string; similarity: number }>;
+  matchError?: string;
 }
 
 /**
  * Main analysis function that processes OCR text and returns medicine information
+ * Now with fuzzy matching for better name detection
  */
 export function analyzeMedicineText(
   extractedText: string,
@@ -40,30 +49,70 @@ export function analyzeMedicineText(
     return null;
   }
 
-  const medicineData = searchMedicine(medicineName);
+  // Try exact match first
+  let medicineData = searchMedicine(medicineName);
+  let matchError: string | undefined;
+  let matchSuggestions: Array<{ name: string; similarity: number }> | undefined;
 
+  // If no exact match, try fuzzy matching
   if (!medicineData) {
+    const availableMedicines = Object.values(medicineDatabase)
+      .map((m) => m.name)
+      .concat(
+        Object.values(medicineDatabase).flatMap((m) => m.aliases)
+      );
+
+    const matchResult = findBestMedicineMatch(medicineName, availableMedicines);
+
+    if (matchResult.match && matchResult.similarity > 0.6) {
+      // Found a good fuzzy match
+      medicineData = searchMedicine(matchResult.match);
+    } else if (matchResult.suggestions.length > 0) {
+      // Found suggestions but no confident match
+      matchError = formatMedicineNotFoundError(
+        medicineName,
+        matchResult.suggestions
+      );
+      matchSuggestions = matchResult.suggestions;
+    } else {
+      // No match found at all
+      matchError = `Medicine "${medicineName}" not found in database. Please check the spelling on the packaging.`;
+    }
+  }
+
+  // Return null if still no medicine found
+  if (!medicineData && !matchSuggestions) {
     return null;
   }
 
-  const expiryStatus = expiryDate 
+  const expiryStatus = expiryDate
     ? checkExpiryStatus(expiryDate)
     : { status: 'valid' as const, message: 'No expiry date found' };
 
-  const simplifiedInfo = {
-    uses: medicineData.uses.map(u => simplifyMedicalText(u)),
-    sideEffects: medicineData.sideEffects.map(s => simplifyMedicalText(s)),
-    warnings: medicineData.warnings.map(w => simplifyMedicalText(w))
-  };
+  const simplifiedInfo = medicineData
+    ? {
+        uses: medicineData.uses.map((u) => simplifyMedicalText(u)),
+        sideEffects: medicineData.sideEffects.map((s) =>
+          simplifyMedicalText(s)
+        ),
+        warnings: medicineData.warnings.map((w) => simplifyMedicalText(w)),
+      }
+    : {
+        uses: [],
+        sideEffects: [],
+        warnings: [],
+      };
 
   return {
-    medicineName: medicineData.name,
-    medicineData,
+    medicineName: medicineData?.name || medicineName,
+    medicineData: medicineData || null,
     extractedText: rawText,
     expiryStatus,
     simplifiedInfo,
     confidence: Math.min(confidence, 1),
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    matchSuggestions,
+    matchError,
   };
 }
 

@@ -96,30 +96,307 @@ export function MedicineResultsEnhanced({
 
   return (
     <div className="w-full space-y-6">
-      {/* Header Card */}
-      <Card className="p-6 border-2 border-blue-200 dark:border-blue-800 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950 dark:to-cyan-950">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1">
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              {result.medicineName}
-            </h2>
-            <div className="flex items-center gap-2 flex-wrap">
-              <Badge
-                variant="outline"
-                className="bg-blue-600 text-white border-blue-600"
-              >
-                {Math.round(result.confidence * 100)}% Confidence
-              </Badge>
-              <Badge className={getExpiryBadgeColor()}>
-                {result.expiryStatus.status.replace('-', ' ').toUpperCase()}
-              </Badge>
+      {/* Medicine Not Found Error with Suggestions */}
+      {!result.medicineData && result.matchError && (
+        <Alert variant="destructive" className="bg-red-50 border-red-300 dark:bg-red-950 dark:border-red-800">
+          <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
+          <AlertDescription className="text-red-800 dark:text-red-200">
+            <p className="font-semibold mb-2">{result.matchError}</p>
+            {result.matchSuggestions && result.matchSuggestions.length > 0 && (
+              <p className="text-sm">
+                Possible matches: {result.matchSuggestions.map((s) => `"${s.name}"`).join(', ')}
+              </p>
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Only show rest if medicine data exists */}
+      {result.medicineData ? (
+        <>
+          {/* Header Card */}
+          <Card className="p-6 border-2 border-primary/30 bg-gradient-to-r from-primary/10 to-secondary/10">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <h2 className="text-3xl font-bold text-foreground mb-2">
+                  {result.medicineName}
+                </h2>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge variant="outline" className="bg-primary text-primary-foreground border-primary">
+                    {Math.round(result.confidence * 100)}% Match
+                  </Badge>
+                  <Badge className={getExpiryBadgeColor()}>
+                    {result.expiryStatus.status.replace('-', ' ').toUpperCase()}
+                  </Badge>
+                </div>
+              </div>
+              <div className="flex-shrink-0">
+                <Pill className="w-12 h-12 text-primary" />
+              </div>
             </div>
-          </div>
-          <div className="flex-shrink-0">
-            <Pill className="w-12 h-12 text-blue-600 dark:text-blue-400" />
-          </div>
-        </div>
-      </Card>
+          </Card>
+
+          {/* Expiry Status Alert */}
+          {result.expiryStatus.status !== 'valid' && (
+            <Alert
+              variant={
+                result.expiryStatus.status === 'expired' ? 'destructive' : 'default'
+              }
+              className={
+                result.expiryStatus.status === 'near-expiry'
+                  ? 'border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950'
+                  : ''
+              }
+            >
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>{result.expiryStatus.message}</AlertDescription>
+            </Alert>
+          )}
+
+          {/* AI-Generated Safety Analysis Section */}
+          {loading && (
+            <Card className="p-6 bg-secondary/10 border-secondary/30">
+              <div className="flex items-center gap-3">
+                <Spinner className="w-5 h-5" />
+                <p className="text-secondary font-semibold">
+                  Generating AI safety analysis...
+                </p>
+              </div>
+            </Card>
+          )}
+
+          {error && (
+            <Alert className="border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950">
+              <Info className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          {safetyAnalysis && !loading && (
+            <>
+              {/* Simplified Explanation */}
+              <Card className="p-6 border-2 border-accent/30 bg-accent/10">
+                <div className="flex items-start gap-4">
+                  <Shield className="w-6 h-6 text-accent flex-shrink-0 mt-1" />
+                  <div>
+                    <h3 className="font-semibold text-accent mb-2">
+                      How Does It Work? (Simple Explanation)
+                    </h3>
+                    <p className="text-foreground/80 leading-relaxed">
+                      {safetyAnalysis.simplifiedExplanation}
+                    </p>
+                  </div>
+                </div>
+              </Card>
+
+              {/* AI Safety Warnings */}
+              {safetyAnalysis.safetyWarnings.length > 0 && (
+                <Card className="p-6 border-2 border-destructive/30 bg-destructive/5">
+                  <h3 className="font-semibold text-destructive mb-4 flex items-center gap-2">
+                    <AlertCircle className="w-5 h-5" />
+                    AI-Generated Safety Warnings
+                  </h3>
+                  <ul className="space-y-2">
+                    {safetyAnalysis.safetyWarnings.map((warning, idx) => (
+                      <li key={idx} className="flex gap-3 text-foreground/80">
+                        <span className="flex-shrink-0 mt-1">•</span>
+                        <span>{warning}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </Card>
+              )}
+
+              {/* Medicine Information Tabs */}
+              <Tabs defaultValue="uses" className="w-full">
+                <TabsList className="grid w-full grid-cols-4">
+                  <TabsTrigger value="uses">Uses</TabsTrigger>
+                  <TabsTrigger value="side-effects">Side Effects</TabsTrigger>
+                  <TabsTrigger value="interactions">Interactions</TabsTrigger>
+                  <TabsTrigger value="populations">Populations</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="uses" className="mt-4">
+                  <Card className="p-6">
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <Info className="w-5 h-5 text-primary" />
+                      What is this medicine used for?
+                    </h3>
+                    <ul className="space-y-3">
+                      {result.simplifiedInfo.uses.map((use, idx) => (
+                        <li key={idx} className="flex gap-3">
+                          <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
+                            {idx + 1}
+                          </span>
+                          <span className="text-foreground/80 pt-0.5">
+                            {use}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="side-effects" className="mt-4">
+                  <Card className="p-6">
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <AlertTriangle className="w-5 h-5 text-yellow-600" />
+                      Common side effects
+                    </h3>
+                    <ul className="space-y-3">
+                      {result.simplifiedInfo.sideEffects.map((effect, idx) => (
+                        <li key={idx} className="flex gap-3">
+                          <span className="flex-shrink-0 w-6 h-6 rounded-full bg-yellow-100 dark:bg-yellow-900 flex items-center justify-center text-xs font-bold text-yellow-600 dark:text-yellow-300">
+                            {idx + 1}
+                          </span>
+                          <span className="text-foreground/80 pt-0.5">
+                            {effect}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="interactions" className="mt-4">
+                  <Card className="p-6">
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <Zap className="w-5 h-5 text-orange-600" />
+                      Drug interactions & conflicts (AI-Generated)
+                    </h3>
+                    {safetyAnalysis && safetyAnalysis.interactionRisks.length > 0 ? (
+                      <ul className="space-y-3">
+                        {safetyAnalysis.interactionRisks.map((risk, idx) => (
+                          <li key={idx} className="flex gap-3">
+                            <span className="flex-shrink-0 w-6 h-6 rounded-full bg-orange-100 dark:bg-orange-900 flex items-center justify-center text-xs font-bold text-orange-600 dark:text-orange-300">
+                              {idx + 1}
+                            </span>
+                            <span className="text-foreground/80 pt-0.5">
+                              {risk}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-foreground/60">
+                        No common interactions identified.
+                      </p>
+                    )}
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="populations" className="mt-4">
+                  <Card className="p-6">
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <Users className="w-5 h-5 text-purple-600" />
+                      Special populations (AI-Generated)
+                    </h3>
+                    {safetyAnalysis && safetyAnalysis.populationWarnings.length > 0 ? (
+                      <ul className="space-y-3">
+                        {safetyAnalysis.populationWarnings.map((warning, idx) => (
+                          <li key={idx} className="flex gap-3">
+                            <span className="flex-shrink-0 w-6 h-6 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center text-xs font-bold text-purple-600 dark:text-purple-300">
+                              {idx + 1}
+                            </span>
+                            <span className="text-foreground/80 pt-0.5">
+                              {warning}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-foreground/60">
+                        No special population warnings identified.
+                      </p>
+                    )}
+                  </Card>
+                </TabsContent>
+              </Tabs>
+
+              {/* Disclaimers */}
+              <Card className="p-4 bg-muted border-muted-foreground/20">
+                <p className="text-xs font-semibold text-foreground mb-2">
+                  Important Disclaimers:
+                </p>
+                <ul className="space-y-1">
+                  {safetyAnalysis.disclaimers.map((disclaimer, idx) => (
+                    <li key={idx} className="text-xs text-foreground/70">
+                      • {disclaimer}
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+
+              {/* Original Warnings */}
+              <Card className="p-6 bg-muted">
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5 text-destructive" />
+                  Important warnings from medicine data
+                </h3>
+                <ul className="space-y-3">
+                  {result.simplifiedInfo.warnings.map((warning, idx) => (
+                    <li key={idx} className="flex gap-3">
+                      <span className="flex-shrink-0 w-6 h-6 rounded-full bg-destructive/10 flex items-center justify-center text-xs font-bold text-destructive">
+                        {idx + 1}
+                      </span>
+                      <span className="text-foreground/80 pt-0.5">
+                        {warning}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            </>
+          )}
+
+          {/* Action Buttons */}
+          {onNewScan && (
+            <div className="flex gap-3">
+              <button
+                onClick={onNewScan}
+                className="flex-1 px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-lg transition-colors"
+              >
+                Scan Another Medicine
+              </button>
+            </div>
+          )}
+        </>
+      ) : (
+        /* No Medicine Data Found - Show Help */
+        <Card className="p-8 border-2 border-border text-center">
+          <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">
+            Medicine Not Found
+          </h3>
+          <p className="text-foreground/70 mb-4">
+            {result.matchError || 'Could not identify the medicine from the image.'}
+          </p>
+          {result.matchSuggestions && result.matchSuggestions.length > 0 && (
+            <div>
+              <p className="text-sm font-semibold text-foreground mb-2">
+                Did you mean one of these?
+              </p>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {result.matchSuggestions.map((s) => (
+                  <Badge key={s.name} variant="outline">
+                    {s.name}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+          {onNewScan && (
+            <button
+              onClick={onNewScan}
+              className="mt-6 px-6 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
+            >
+              Try Another Image
+            </button>
+          )}
+        </Card>
+      )}
+    </div>
+  );
 
       {/* Expiry Status Alert */}
       {result.expiryStatus.status !== 'valid' && (
